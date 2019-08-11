@@ -1,0 +1,42 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "libsalesforce"
+author = "Anthony King"
+author-email = "anthonydking@gmail.com"
+home-page = "https://github.com/cybojenix/py-libsalesforce"
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+requires-python = '>=3.6'
+
+requires = [
+    "typing_extensions >= 3.6.5"
+]
+
+[tool.flit.metadata.requires-extra]
+dev = [
+    "black",
+    "autoflake",
+    "isort",
+    "mypy",
+]
+test = [
+    "faker",
+    "pytest",
+    "pytest-cov",
+    "pytest-randomly",
+]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 88
