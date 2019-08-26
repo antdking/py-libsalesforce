@@ -1,16 +1,20 @@
-from typing import Iterator, TypeVar
+from typing import Iterator, TypeVar, Optional
 
 from .construct import construct_select_statement
-from .interface import IRow
+from .interface import IRow, SupportsRendering
 from .spy import Spy
 
 T = TypeVar("T")
+T_QM = TypeVar("T_QM", bound='QueryManager')
 
 
 class QueryManager:
+    where: Optional[SupportsRendering]
+
     def __init__(self, from_object: str, client):
         self.from_object = from_object
         self.client = client
+        self.where = None
 
     def run(self, iterator: Iterator[T]) -> Iterator[T]:
         # Currently we don't actually do much here.
@@ -26,13 +30,17 @@ class QueryManager:
         next(iterator)  # discards
         return iterator
 
+    def __call__(self: T_QM, *, where: SupportsRendering = None) -> T_QM:
+        self.where = where
+        return self
+
     def __iter__(self) -> Iterator[IRow]:
         # We need to find out what fields are being requested
         spy = Spy()
         yield spy
 
         # Now we've collected all access points, turn it into an SOQL statement
-        query_string = construct_select_statement(spy, self.from_object)
+        query_string = construct_select_statement(spy, self.from_object, where=self.where)
         print(query_string)
 
         # The client can take over from here, as that is in charge of fetching + building objects.

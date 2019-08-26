@@ -1,12 +1,15 @@
-from typing import Iterator, TypeVar
+from typing import Iterator, TypeVar, Optional
 
-from .interface import ISpy
+from .interface import ISpy, SupportsRendering
 
 T = TypeVar("T")
 
 
-def construct_select_statement(spy: ISpy, from_: str) -> str:
-    return f"""SELECT {', '.join(construct_selects(spy))} FROM {from_}"""
+def construct_select_statement(spy: ISpy, from_: str, *, where: Optional[SupportsRendering] = None) -> str:
+    clause = f"""SELECT {', '.join(construct_selects(spy))} FROM {from_}"""
+    if where:
+        clause += f' WHERE {where.render()}'
+    return clause
 
 
 def construct_selects(spy: ISpy, current_name: str = "") -> Iterator[str]:
@@ -25,7 +28,10 @@ def construct_subquery(spy: ISpy, name: str) -> str:
         construct_selects(field_spy, field_name)
         for field_name, field_spy in spy.selected_fields.items()
     )
-    return f"""(SELECT {', '.join(select_fields)} FROM {name})"""
+    inner_clause = f"""SELECT {', '.join(select_fields)} FROM {name}"""
+    if spy.where:
+        inner_clause += f" WHERE {spy.where.render()}"
+    return f"({inner_clause})"
 
 
 def _flatten(iterables: Iterator[Iterator[T]]) -> Iterator[T]:

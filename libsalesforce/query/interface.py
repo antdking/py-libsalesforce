@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterator, TypeVar
+from typing import Any, Dict, Iterator, TypeVar, Optional
 
 from typing_extensions import Protocol
 
@@ -10,8 +10,13 @@ class SupportsSubQuery(Protocol):
         ...
 
 
+class SupportsRendering(Protocol):
+    def render(self) -> str:
+        ...
+
+
 class SupportsFiltering(Protocol):
-    def filter(self, expression: bool) -> bool:
+    def __call__(self: T, *, where: Optional[SupportsRendering] = None) -> T:
         ...
 
 
@@ -20,7 +25,7 @@ class IRow(SupportsFiltering, SupportsSubQuery, Protocol):
         ...
 
 
-class IQueryManager(Protocol):
+class IQueryManager(SupportsFiltering, Protocol):
     def __iter__(self) -> Iterator[IRow]:
         ...
 
@@ -28,6 +33,7 @@ class IQueryManager(Protocol):
 class ISpy(IRow, Protocol):
     selected_fields: "Dict[str, ISpy]"
     is_subquery: bool
+    where: Optional[SupportsRendering]
 
 
 class IQueryModel(Protocol):
@@ -37,3 +43,7 @@ class IQueryModel(Protocol):
 class IQueryClient(Protocol):
     def query(self, query_string: str) -> Iterator[IRow]:
         ...
+
+class IFilterBuilder(SupportsRendering, Protocol):
+    def __getattr__(self: T, name: str) -> T:
+        pass
